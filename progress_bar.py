@@ -1,4 +1,5 @@
 #from sense_hat import SenseHat
+import palettes as p
 
 
 def full_monotone(sense, max_value=100, min_value=0, color=(255, 255, 255)):
@@ -45,3 +46,13 @@ def full_monotone(sense, max_value=100, min_value=0, color=(255, 255, 255)):
         return value / max_value
 
     return func
+
+
+def set_row_palette(sense, row, palette):
+    pixels = sense.get_pixels()
+    pixels = pixels[:8 * (row + 1)] + palette + pixels[8 * row + 8:]
+    sense.set_pixels(pixels)
+
+
+def set_row_level(sense, row, level, palette=p.WHITE_SOLID):
+    set_row_palette(sense, row, palette[:level] + [p.OFF] * (8 - level))
