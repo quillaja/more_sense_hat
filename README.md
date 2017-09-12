@@ -1,2 +1,2 @@
 # more_sense_hat
-Additional functions for the Rasperry Py Sense Hat.
+Additional functions for the Raspberry Py Sense Hat.
