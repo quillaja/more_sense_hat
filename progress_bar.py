@@ -84,12 +84,12 @@ class Display(object):
         # level = property(_set_level, _get_level)
         # palette = property(_set_palette, _get_palette)
 
-    def __init__(self, sense):
+    def __init__(self, sense, palette=p.WHITE_SOLID):
         """Initiallizes the object with the given SenseHat() instance.
-        Clear's the sense hat's LED matrix."""
+        Clear's the sense hat's LED matrix. Sets each row's `palette`."""
         self._sense = sense
         sense.clear()
-        self._rows = [Display._row() for i in range(8)]
+        self._rows = [Display._row(palette=palette) for i in range(8)]
 
     def __setitem__(self, row, value):
         """ Sets the row's level or palette depending on what type is `value`,
@@ -112,3 +112,45 @@ class Display(object):
         """Returns the `Display._row` instance for the given row. Consider it
         READ ONLY."""
         return self._rows[row]  #self._rows[row].level, self._rows[row].palette
+
+
+def spark_line(sense, max_value=100, min_value=0, palette=p.WHITE_SOLID):
+    """
+    Produces a function to use the SenseHat specified by `sense` as a 
+    sparkline style graph. After initializing with an optional `max_value`, 
+    `min_value`, and `palette`, use the resulting sparkline by passing
+    values to it. The function will return the value that previously was in row
+    7 (rows are 0 through 7).
+
+    Example:
+    `
+    # sparkline with default max/min and the green-red transitioning palette
+    spark1 = spark_line(my_hat, palette=p.GR_SMOOTH)
+    spark1(50) #returns 0.0, row 0 of LED matrix has 4 leds lit
+    spark1(100) #returns 0.0, row 0 has 8 lit, row 1 has 4 lit
+    ...
+    spark(16) #returns 50 from first call, row 0 has 1 lit, etc...
+    `
+    """
+    d = Display(sense, palette)
+
+    # scale max and min values to [0, whatever]
+    value_adj = 0 - min_value
+    min_value, max_value = min_value + value_adj, max_value + value_adj
+
+    def func(value):
+        value = value + value_adj  # scale input value to match max/min
+        value = min(max_value, max(value, min_value))  # clamp value
+        value = int(value * (8.0 / max_value))  # scale value to [0,8]
+
+        # keep old level from row 7, move every row's level over 1,
+        # then set the scaled value to the new level of row 0
+        ejected = d[7].level
+        for i in range(7, 0, -1):
+            d[i] = d[i - 1].level
+        d[0] = value
+
+        # scale old level back to [min_value, max_value]
+        return ((ejected / 8.0) * max_value) - value_adj
+
+    return func
