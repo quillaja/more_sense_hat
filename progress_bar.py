@@ -42,8 +42,6 @@ def full_monotone(sense, max_value=100, min_value=0, color=(255, 255, 255)):
         data = [color] * on + [dim_color] * dim + [(0, 0, 0)] * off
         sense.set_pixels(data)
 
-        return value / max_value
-
     return func
 
 
@@ -71,7 +69,7 @@ class Display(object):
     applied to the row.
     """
 
-    class _row:
+    class _Row:
         """Represents a row's data."""
 
         def __init__(self, level=0, palette=p.WHITE_SOLID):
@@ -89,7 +87,7 @@ class Display(object):
         Clear's the sense hat's LED matrix. Sets each row's `palette`."""
         self._sense = sense
         sense.clear()
-        self._rows = [Display._row(palette=palette) for i in range(8)]
+        self._rows = [Display._Row(palette=palette) for i in range(8)]
 
     def __setitem__(self, row, value):
         """ Sets the row's level or palette depending on what type is `value`,
@@ -104,12 +102,12 @@ class Display(object):
             self._rows[row].palette = value
             set_row_level(self._sense, row, self._rows[row].level,
                           self._rows[row].palette)
-        elif isinstance(value, Display._row):
+        elif isinstance(value, Display._Row):
             self[row] = value.level
             self[row] = value.palette
 
     def __getitem__(self, row):
-        """Returns the `Display._row` instance for the given row. Consider it
+        """Returns the `Display._Row` instance for the given row. Consider it
         READ ONLY."""
         return self._rows[row]  #self._rows[row].level, self._rows[row].palette
 
@@ -119,17 +117,16 @@ def spark_line(sense, max_value=100, min_value=0, palette=p.WHITE_SOLID):
     Produces a function to use the SenseHat specified by `sense` as a 
     sparkline style graph. After initializing with an optional `max_value`, 
     `min_value`, and `palette`, use the resulting sparkline by passing
-    values to it. The function will return the value that previously was in row
-    7 (rows are 0 through 7).
+    values to it.
 
     Example:
     `
     # sparkline with default max/min and the green-red transitioning palette
     spark1 = spark_line(my_hat, palette=p.GR_SMOOTH)
-    spark1(50) #returns 0.0, row 0 of LED matrix has 4 leds lit
-    spark1(100) #returns 0.0, row 0 has 8 lit, row 1 has 4 lit
+    spark1(50) #row 0 of LED matrix has 4 leds lit
+    spark1(100) #row 0 has 8 lit, row 1 has 4 lit
     ...
-    spark(16) #returns 50 from first call, row 0 has 1 lit, etc...
+    spark(16) #row 0 has 1 lit, etc...
     `
     """
     d = Display(sense, palette)
@@ -143,14 +140,58 @@ def spark_line(sense, max_value=100, min_value=0, palette=p.WHITE_SOLID):
         value = min(max_value, max(value, min_value))  # clamp value
         value = int(value * (8.0 / max_value))  # scale value to [0,8]
 
-        # keep old level from row 7, move every row's level over 1,
+        # move every row's level over 1,
         # then set the scaled value to the new level of row 0
-        ejected = d[7].level
         for i in range(7, 0, -1):
             d[i] = d[i - 1].level
         d[0] = value
 
-        # scale old level back to [min_value, max_value]
-        return ((ejected / 8.0) * max_value) - value_adj
-
     return func
+
+
+class MultiPoint(object):
+    class _Point:
+        def __init__(self, color, x_extents, y_extents):
+            self.x, self.y = None, None
+            self.color = color
+            self.x_min, self.x_max = x_extents
+            self.y_min, self.y_max = y_extents
+
+        def update(self, coord):
+            x, y = coord
+            x = min(self.x_max, max(x, self.x_min))  # clamp value
+            y = min(self.y_max, max(y, self.y_min))  # TODO: refactor
+
+            #TODO refactor scaling
+            self.x = 8 * ((x - self.x_min) / (self.x_max - self.x_min))
+            self.y = 8 * ((y - self.y_min) / (self.y_max - self.y_min))
+
+    def __init__(self, sense):
+        self._sense = sense
+        self._points = dict()
+
+    def _clear_all(self):
+        for pt in iter(self._points.values()):
+            if pt.x and pt.y:
+                self._sense.set_pixel(pt.x, pt.y, p.OFF)
+
+    def _redraw_all(self):
+        for pt in iter(self._points.values()):
+            if pt.x and pt.y:
+                self._sense.set_pixel(pt.x, pt.y, pt.color)
+
+    def remove_point(self, key):
+        self._clear_all()
+        self._points.pop(key)
+        self._redraw_all()
+
+    def add_point(self, key, color, x_extents=(0, 100), y_extents=(0, 100)):
+        self._points[key] = MultiPoint._Point(color, x_extents, y_extents)
+
+    def _set_value(self, key, value):
+        self._clear_all()
+        self._points[key].update(value)
+        self._redraw_all()
+
+    def __setitem__(self, key, value):
+        self._set_value(key, value)
