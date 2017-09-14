@@ -28,9 +28,15 @@ class FakeHat:
 
     def set_pixels(self, data):
         self.data = data
-        im = Image.new('RGB', (8, 8))
-        im.putdata(data)
-        im.show()
 
     def get_pixels(self):
         return self.data
+
+    def set_pixel(self, x, y, color):
+        index = 8 * x + y
+        self.data[index] = color
+
+    def show(self):
+        im = Image.new('RGB', (8, 8))
+        im.putdata(self.data)
+        im.show()

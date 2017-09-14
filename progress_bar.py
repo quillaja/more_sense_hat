@@ -1,6 +1,16 @@
 import palettes as p
 
 
+def clamp(value, min_value, max_value):
+    '''Clamps `value` to [`min_value`, `max_value`].'''
+    return min(max_value, max(value, min_value))
+
+
+def scale(target, value, min_value, max_value):
+    '''Scales `value` to the range [0, `target`].'''
+    target * ((value - min_value) / (max_value - min_value))
+
+
 def full_monotone(sense, max_value=100, min_value=0, color=(255, 255, 255)):
     """
     Produces a function to set the LED matrix of the SenseHat specified by
@@ -150,7 +160,16 @@ def spark_line(sense, max_value=100, min_value=0, palette=p.WHITE_SOLID):
 
 
 class MultiPoint(object):
+    """
+    This class allows tracking multiple 2-part data values. Add points with
+    `add_point()` and supply data using `[]` and supplying the key for the
+    point to be updated. The point will not appear on the LED matrix until data
+    has been supplied at least once.
+    """
+
     class _Point:
+        """Holds data for a point on the LED matrix"""
+
         def __init__(self, color, x_extents, y_extents):
             self.x, self.y = None, None
             self.color = color
@@ -159,12 +178,12 @@ class MultiPoint(object):
 
         def update(self, coord):
             x, y = coord
-            x = min(self.x_max, max(x, self.x_min))  # clamp value
-            y = min(self.y_max, max(y, self.y_min))  # TODO: refactor
+            x = clamp(x, self.x_min, self.x_max)  # clamp value
+            y = clamp(y, self.y_min, self.y_max)
 
             #TODO refactor scaling
-            self.x = 8 * ((x - self.x_min) / (self.x_max - self.x_min))
-            self.y = 8 * ((y - self.y_min) / (self.y_max - self.y_min))
+            self.x = int(scale(7, x, self.x_min, self.x_max))
+            self.y = int(scale(7, y, self.y_min, self.y_max))
 
     def __init__(self, sense):
         self._sense = sense
@@ -181,17 +200,23 @@ class MultiPoint(object):
                 self._sense.set_pixel(pt.x, pt.y, pt.color)
 
     def remove_point(self, key):
+        """Deletes the point."""
         self._clear_all()
         self._points.pop(key)
         self._redraw_all()
 
     def add_point(self, key, color, x_extents=(0, 100), y_extents=(0, 100)):
+        """Add a new data point to show. `color` should be a RGB 3-tuple."""
         self._points[key] = MultiPoint._Point(color, x_extents, y_extents)
 
     def _set_value(self, key, value):
+        """Sets the value of a point. `value` must be a
+        2-tuple of `(x, y)`."""
         self._clear_all()
         self._points[key].update(value)
         self._redraw_all()
 
     def __setitem__(self, key, value):
+        """Allows the value of a point to be set using []. `value` must be a
+        2-tuple of `(x, y)`."""
         self._set_value(key, value)
