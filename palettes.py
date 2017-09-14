@@ -12,7 +12,7 @@ RED_SOLID = [RED] * 8
 GREEN_SOLID = [GREEN] * 8
 BLUE_SOLID = [BLUE] * 8
 
-BRIGHTER = [(a, a, a) for a in range(40, 256, 32)] + [WHITE]
+BRIGHTER = [(a, a, a) for a in range(48, 255, 30)] + [WHITE]
 DIMMER = BRIGHTER[::-1]
 
 GR_SMOOTH = [(0, 255, 0), (85, 255, 0), (170, 255, 0), (255, 255, 0),
@@ -36,8 +36,8 @@ GB_SMOOTH = BG_SMOOTH[::-1]
 BG = [BLUE] * 3 + [CYAN] * 2 + [GREEN] * 3
 GB = BG[::-1]
 
-BGR_SMOOTH = [(0, 0, 255), (0, 64, 192), (0, 128, 128), (0, 192, 64),
-              (0, 255, 0), (90, 180, 0), (180, 90, 0), (255, 0, 0)]
+BGR_SMOOTH = [(0, 0, 255), (0, 128, 255), (0, 255, 255), (0, 255, 128),
+              (0, 255, 0), (255, 255, 0), (255, 128, 0), (255, 0, 0)]
 RGB_SMOOTH = BGR_SMOOTH[::-1]
 
 BGR = [BLUE, BLUE, CYAN, GREEN, GREEN, YELLOW, YELLOW, RED]

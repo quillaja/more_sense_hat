@@ -8,7 +8,7 @@ def clamp(value, min_value, max_value):
 
 def scale(target, value, min_value, max_value):
     '''Scales `value` to the range [0, `target`].'''
-    target * ((value - min_value) / (max_value - min_value))
+    return target * ((value - min_value) / (max_value - min_value))
 
 
 def full_monotone(sense, max_value=100, min_value=0, color=(255, 255, 255)):
