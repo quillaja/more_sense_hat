@@ -12,7 +12,7 @@ RED_SOLID = [RED] * 8
 GREEN_SOLID = [GREEN] * 8
 BLUE_SOLID = [BLUE] * 8
 
-BRIGHTER = [(a, a, a) for a in range(32, 256, 32)] + [WHITE]
+BRIGHTER = [(a, a, a) for a in range(40, 256, 32)] + [WHITE]
 DIMMER = BRIGHTER[::-1]
 
 GR_SMOOTH = [(0, 255, 0), (85, 255, 0), (170, 255, 0), (255, 255, 0),
