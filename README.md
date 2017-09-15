@@ -6,11 +6,9 @@ Additional functions for the Raspberry Py Sense Hat.
 2. Multiple static bars: Up to 8 bars of configurable color. Use the `Display` 
 class.
 3. Spark line: Shows change in a single data point over time. Use `spark_line`.
+4. MultiPoint: Class that allows display of multiple 2-dimensional data points.
 
 ### Prospective
-1. dot-plot?: Shows a number of data point simultaneously, each point can have
-2 aspects (x,y)--potentially 3 if the brightness of the point is used. Could 
-also show the change over time by implementing it with a "snakes"-like display.
 2. ????
 3. Profit
 
